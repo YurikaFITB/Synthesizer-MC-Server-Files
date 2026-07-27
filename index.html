@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Server Status & Mods</title>
+  <style>
+    :root {
+      --bg: #121214;
+      --card: #1e1e24;
+      --accent: #5865F2;
+      --online: #22c55e;
+      --offline: #ef4444;
+      --text: #f3f4f6;
+      --subtext: #9ca3af;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .status-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* ENHANCED VISIBILITY BADGES */
+    .badge {
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-weight: 800;
+      font-size: 1.1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .badge.online { 
+      background: rgba(34, 197, 94, 0.25); 
+      color: var(--online);
+      border: 2px solid var(--online);
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+    }
+
+    .badge.offline { 
+      background: rgba(239, 68, 68, 0.25); 
+      color: var(--offline);
+      border: 2px solid var(--offline);
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .badge.online .status-dot { background: var(--online); box-shadow: 0 0 8px var(--online); }
+    .badge.offline .status-dot { background: var(--offline); box-shadow: 0 0 8px var(--offline); }
+
+    .ip-container {
+      margin-top: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .ip-title {
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: var(--subtext);
+    }
+
+    .ip-box {
+      background: #141417;
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-family: monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .ip-details {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    button:hover { opacity: 0.9; }
+
+    .mod-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 15px;
+    }
+
+    .mod-item {
+      background: #141417;
+      padding: 12px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .mod-item a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.85rem;
+    }
+
+    .player-list-box {
+      margin-top: 10px;
+      padding-left: 20px;
+      color: var(--text);
+    }
+
+    .player-list-box li {
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SERVER STATUS CARD -->
+  <div class="card">
+    <div class="status-header">
+      <h2>Minecraft Server Status</h2>
+      <span id="status-badge" class="badge offline">
+        <span class="status-dot"></span><span id="status-text">Checking...</span>
+      </span>
+    </div>
+
+    <!-- SERVER ADDRESS 1 -->
+    <div class="ip-container">
+      <span class="ip-title">Domain Address</span>
+      <div class="ip-box">
+        <div class="ip-details">
+          <span>Address: <strong>yellow-ae.gl.at.ply.gg</strong></span>
+          <span>Port: <strong>3435</strong></span>
+        </div>
+        <div>
+          <button onclick="copyText('yellow-ae.gl.at.ply.gg')">Copy IP</button>
+          <button onclick="copyText('3435')">Copy Port</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SERVER ADDRESS 2 -->
+    <div class="ip-container">
+      <span class="ip-title">Direct IP Address</span>
+      <div class="ip-box">
+        <div class="ip-details">
+          <span>Address: <strong>147.185.221.230</strong></span>
+          <span>Port: <strong>3435</strong></span>
+        </div>
+        <div>
+          <button onclick="copyText('147.185.221.230')">Copy IP</button>
+          <button onclick="copyText('3435')">Copy Port</button>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin-top: 20px; color: var(--subtext);">
+      Players Online: <strong id="player-count" style="color: var(--text);">0</strong>
+    </p>
+    
+    <!-- ONLINE PLAYER LIST -->
+    <ul id="player-list" class="player-list-box"></ul>
+
+    <hr style="border: 0; border-top: 1px solid #2d2d35; margin: 20px 0;">
+    
+    <!-- PING HOST BUTTON -->
+    <button style="width: 100%; background: #ef4444;" onclick="pingOfflineHost()">
+      🔔 Server Offline? Send me a notification!
+    </button>
+  </div>
+
+  <!-- MODS LIST CARD -->
+  <div class="card">
+    <h2>Required Mods</h2>
+    <p style="color: var(--subtext); font-size: 0.9rem;">Our Mods:</p>
+    
+    <div class="mod-list">
+      <div class="mod-item">
+        <span>Better On Bedrock 1.2.1</span>
+        <a href="https://mcpedl.com/better-on-bedrock/" target="_blank" rel="noopener noreferrer">Download</a>
+      </div>
+      <div class="mod-item">
+        <span>BONY162's Backpacks</span>
+        <a href="https://mcpedl.com/bony162backpacks/" target="_blank" rel="noopener noreferrer">Download</a>
+      </div>
+      <div class="mod-item">
+        <span>Fast Craft & Fast Loot</span>
+        <a href="https://mcpedl.com/fast-craft-resource-pack-for-mcpe-1-19/" target="_blank" rel="noopener noreferrer">Download</a>
+      </div>
+      <div class="mod-item">
+        <span>SoundTweak</span>
+        <a href="https://mcpedl.com/soundtweaks/" target="_blank" rel="noopener noreferrer">Download</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOD SUGGESTION FORM -->
+  <div class="card">
+    <h2>Suggest a Mod</h2>
+    <p style="color: var(--subtext); font-size: 0.9rem;">Want a new mod added? Put your suggestion here.</p>
+    <form id="suggestionForm" onsubmit="submitSuggestion(event)">
+      <input type="text" id="modInput" placeholder="Mod name or link" required style="width: 70%; padding: 8px; border-radius: 4px; border: 1px solid #333; background: #141417; color: white;">
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+
+  <script>
+    const DISCORD_PRIVATE_WEBHOOK = "https://discord.com/api/webhooks/1531000247688630474/BpblDLBCKD0IUkgi-kaCSNZWOlDnVs3AhzufDuVcOvuuyD4p-xCIKezeAw8hrDxk5NIm";
+    const DISCORD_PUBLIC_WEBHOOK = "https://discord.com/api/webhooks/1531036952822939657/GMJR2O_mV4k5wPw4dxswUaiecke5BAuZYflMyXYj0gRASvzB2ew1m7Jmb022h3Z5P_Zr";
+
+    const STATUS_PING = "<@&1306303285401223188>";
+    const ADMIN_PING = "<@&1531045402542080190>";
+
+    const SERVER_HOST = "yellow-ae.gl.at.ply.gg";
+    const SERVER_PORT = "3435";
+
+    async function checkStatus() {
+  const badge = document.getElementById('status-badge');
+  const statusText = document.getElementById('status-text');
+  const count = document.getElementById('player-count');
+  const list = document.getElementById('player-list');
+
+  try {
+    // 1. Fetch server online/offline state from mcstatus API
+    const res = await fetch(`https://api.mcstatus.io/v2/status/bedrock/${SERVER_HOST}:${SERVER_PORT}`);
+    const data = await res.json();
+
+    list.innerHTML = '';
+    handleStatusChange(data.online);
+
+    if (data.online) {
+      statusText.textContent = "Online";
+      badge.className = "badge online";
+
+      // Fetch player list from Cloudflare Worker KV
+      try {
+        const playerRes = await fetch('https://mc-player-tracker.synthesizer.workers.dev');
+        const playerData = await playerRes.json();
+
+        count.textContent = `${playerData.count} / ${data.players.max}`;
+
+        if (playerData.players && playerData.players.length > 0) {
+          playerData.players.forEach(playerName => {
+            const li = document.createElement('li');
+            li.textContent = playerName;
+            list.appendChild(li);
+          });
+        } else {
+          const li = document.createElement('li');
+          li.textContent = "No players online right now.";
+          li.style.color = "var(--subtext)";
+          list.appendChild(li);
+        }
+      } catch (workerErr) {
+        console.error("Failed to fetch players from Worker:", workerErr);
+        count.textContent = `${data.players.online} / ${data.players.max}`;
+        const li = document.createElement('li');
+        li.textContent = "Players online, but list couldn't be loaded.";
+        li.style.color = "var(--subtext)";
+        list.appendChild(li);
+      }
+    } else {
+      // FIX: Explicitly handle offline API response
+      statusText.textContent = "Offline";
+      badge.className = "badge offline";
+      count.textContent = "0";
+      
+      const li = document.createElement('li');
+      li.textContent = "Server is offline.";
+      li.style.color = "var(--subtext)";
+      list.appendChild(li);
+    }
+  } catch (err) {
+    // Handles total fetch/network failures
+    console.error(err);
+    statusText.textContent = "Offline";
+    badge.className = "badge offline";
+    count.textContent = "0";
+  }
+}
+
+    // DISCORD STATE CHANGE ANNOUNCER
+    function handleStatusChange(isOnline) {
+      const previousState = localStorage.getItem('last_known_server_status');
+      const newState = isOnline ? 'online' : 'offline';
+
+      // Only send message if state actually changed from previous check
+      if (previousState && previousState !== newState) {
+        const messageContent = isOnline 
+          ? `🟢 **Server Update:** ${STATUS_PING} Synthesizer is now **ONLINE**!
+          *Server Status Website: https://synthesizer-status.synthesizer.workers.dev/*` 
+          : `🔴 **Server Update:** Synthesizer is now **OFFLINE**!
+          *Server Status Website: https://synthesizer-status.synthesizer.workers.dev/*`;
+
+        fetch(DISCORD_PUBLIC_WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: messageContent })
+        }).catch(err => console.error("Webhook dispatch error:", err));
+      }
+
+      localStorage.setItem('last_known_server_status', newState);
+    }
+
+    function copyText(text) {
+      navigator.clipboard.writeText(text);
+      alert(`Copied: ${text}`);
+    }
+
+    function pingOfflineHost() {
+      fetch(DISCORD_PRIVATE_WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          content: `⚠️ **Server Alert:** ${ADMIN_PING} A player noticed the Minecraft server is offline!` 
+        })
+      })
+      .then(res => {
+        if (res.ok) {
+          alert("Alert sent to Discord!");
+        } else {
+          alert("Failed to send alert.");
+        }
+      })
+      .catch(err => console.error(err));
+    }
+
+    async function submitSuggestion(event) {
+      event.preventDefault();
+      const input = document.getElementById('modInput');
+      const modName = input.value;
+
+      try {
+        await fetch(DISCORD_PRIVATE_WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: `${ADMIN_PING} 💡 **New Mod Suggestion:** ${modName}` })
+        });
+        alert("Suggestion submitted!");
+        input.value = '';
+      } catch (err) {
+        alert("Failed to submit suggestion.");
+        console.error(err);
+      }
+    }
+
+    // Initial check on load
+    checkStatus();
+
+    // Check automatically every 15 seconds while the page is open
+    setInterval(checkStatus, 15000);
+  </script>
+</body>
+</html>

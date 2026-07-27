@@ -1,0 +1,6 @@
+name = "DiscordChatLogger"
+version = "1.0.0"
+main = "main.DiscordLoggerPlugin"
+api_version = "0.10"
+description = "Forwards in-game chat straight to Discord."
+authors = ["Synthesizer"]
