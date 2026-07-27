@@ -14,6 +14,7 @@ JSON_OUTPUT_PATH = "players.json"
 class DiscordLoggerPlugin(Plugin):
     name = "DiscordChatLogger"
     version = "1.0.0"
+    api_version = "0.11"
 
     def on_enable(self):
         self.online_players = set()
