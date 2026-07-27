@@ -1,0 +1,11 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "endstone-discord-chat-logger"
+version = "1.0.0"
+description = "Forwards in-game chat to Discord."
+
+[project.entry-points."endstone"]
+discord-chat-logger = "endstone_discord_chat_logger:DiscordLoggerPlugin"
