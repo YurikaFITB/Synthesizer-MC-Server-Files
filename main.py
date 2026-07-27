@@ -114,7 +114,8 @@ class DiscordLoggerPlugin(Plugin):
             data=payload,
             headers={
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {API_SECRET}"
+                "Authorization": f"Bearer {API_SECRET}",
+                "User-Agent": "Mozilla/5.0"
             }
         )
         try:
