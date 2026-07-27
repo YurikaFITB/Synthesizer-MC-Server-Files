@@ -1,4 +1,5 @@
 import json
+import os
 import time
 import urllib.request
 import urllib.error
@@ -17,7 +18,13 @@ class DiscordLoggerPlugin(Plugin):
     def on_enable(self):
         self.online_players = set()
         self.logger.info("DiscordChatLogger plugin successfully enabled!")
+        self.logger.info(f"players.json will be written to: {os.path.abspath(JSON_OUTPUT_PATH)}")
         self.register_events(self)
+
+        # Run an explicit startup self-test so you can see in the console
+        # exactly which step (webhook vs worker vs file write) is failing.
+        self.logger.info("Running startup connectivity self-test...")
+        self.send_discord("✅ DiscordChatLogger plugin started and connected.")
         self.update_player_data()
 
     def send_discord(self, content):
@@ -28,21 +35,23 @@ class DiscordLoggerPlugin(Plugin):
             headers={"Content-Type": "application/json", "User-Agent": "Mozilla/5.0"}
         )
         try:
-            with urllib.request.urlopen(req, timeout=3) as response:
-                pass
+            with urllib.request.urlopen(req, timeout=8) as response:
+                self.logger.info(f"Discord webhook sent OK (status {response.status})")
         except urllib.error.HTTPError as e:
-            self.logger.error(f"Discord webhook HTTP error: {e.code} - {e.read().decode()}[cite: 1]")
+            body = e.read().decode(errors="replace")
+            self.logger.error(f"Discord webhook HTTP error: {e.code} - {body}")
+        except urllib.error.URLError as e:
+            self.logger.error(f"Discord webhook network/DNS error (likely outbound connectivity issue on host): {e.reason}")
         except Exception as e:
-            self.logger.error(f"Discord webhook failed: {e}[cite: 1]")
+            self.logger.error(f"Discord webhook failed: {type(e).__name__}: {e}")
 
     def update_player_data(self):
         try:
-            # Endstone server online_players property lookup
             current_players = [p.name for p in self.server.online_players]
         except Exception as e:
-            self.logger.error(f"Failed to fetch online players list: {e}[cite: 1]")
+            self.logger.error(f"Failed to fetch online players list: {type(e).__name__}: {e}")
             current_players = []
-            
+
         self.online_players = set(current_players)
 
         data = {
@@ -51,12 +60,14 @@ class DiscordLoggerPlugin(Plugin):
             "updated_at": int(time.time())
         }
 
-        # 1. Write local players.json with absolute clarity
+        # 1. Write local players.json
         try:
-            with open(JSON_OUTPUT_PATH, "w") as f:
+            abs_path = os.path.abspath(JSON_OUTPUT_PATH)
+            with open(abs_path, "w") as f:
                 json.dump(data, f, indent=2)
+            self.logger.info(f"players.json written successfully to {abs_path}")
         except Exception as e:
-            self.logger.error(f"Failed to write local players.json: {e}[cite: 1]")
+            self.logger.error(f"Failed to write local players.json: {type(e).__name__}: {e}")
 
         # 2. Sync to Cloudflare Worker
         payload = json.dumps(data).encode("utf-8")
@@ -69,10 +80,15 @@ class DiscordLoggerPlugin(Plugin):
             }
         )
         try:
-            with urllib.request.urlopen(req, timeout=5) as response:
-                pass
+            with urllib.request.urlopen(req, timeout=8) as response:
+                self.logger.info(f"Cloudflare Worker sync OK (status {response.status})")
+        except urllib.error.HTTPError as e:
+            body = e.read().decode(errors="replace")
+            self.logger.error(f"Cloudflare Worker sync HTTP error: {e.code} - {body}")
+        except urllib.error.URLError as e:
+            self.logger.error(f"Cloudflare Worker sync network/DNS error: {e.reason}")
         except Exception as e:
-            self.logger.error(f"Cloudflare Worker sync failed: {e}[cite: 1]")
+            self.logger.error(f"Cloudflare Worker sync failed: {type(e).__name__}: {e}")
 
     @event_handler
     def on_player_chat(self, event: PlayerChatEvent):
