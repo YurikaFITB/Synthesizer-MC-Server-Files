@@ -250,115 +250,71 @@
     const SERVER_PORT = "3435";
 
     async function checkStatus() {
-  const badge = document.getElementById('status-badge');
-  const statusText = document.getElementById('status-text');
-  const count = document.getElementById('player-count');
-  const list = document.getElementById('player-list');
+      const badge = document.getElementById('status-badge');
+      const statusText = document.getElementById('status-text');
+      const count = document.getElementById('player-count');
+      const list = document.getElementById('player-list');
 
-  try {
-    // 1. Fetch server online/offline state from mcstatus API
-    const res = await fetch(`https://api.mcstatus.io/v2/status/bedrock/${SERVER_HOST}:${SERVER_PORT}`);
-    const data = await res.json();
-
-    list.innerHTML = '';
-    handleStatusChange(data.online);
-
-    if (data.online) {
-      statusText.textContent = "Online";
-      badge.className = "badge online";
-
-      // Fetch player list from Cloudflare Worker KV
       try {
-        const playerRes = await fetch('https://mc-player-tracker.synthesizer.workers.dev');
-        const playerData = await playerRes.json();
+        // 1. Fetch server online/offline state from mcstatus API
+        const res = await fetch(`https://api.mcstatus.io/v2/status/bedrock/${SERVER_HOST}:${SERVER_PORT}`);
+        const data = await res.json();
 
-        count.textContent = `${playerData.count} / ${data.players.max}`;
+        list.innerHTML = '';
 
-        if (playerData.players && playerData.players.length > 0) {
-          playerData.players.forEach(playerName => {
+        if (data.online) {
+          statusText.textContent = "Online";
+          badge.className = "badge online";
+
+          // Fetch player list from Cloudflare Worker KV
+          try {
+            const playerRes = await fetch('https://mc-player-tracker.synthesizer.workers.dev');
+            const playerData = await playerRes.json();
+
+            count.textContent = `${playerData.count} / ${data.players.max}`;
+
+            if (playerData.players && playerData.players.length > 0) {
+              playerData.players.forEach(playerName => {
+                const li = document.createElement('li');
+                li.textContent = playerName;
+                list.appendChild(li);
+              });
+            } else {
+              const li = document.createElement('li');
+              li.textContent = "No players online right now.";
+              li.style.color = "var(--subtext)";
+              list.appendChild(li);
+            }
+          } catch (workerErr) {
+            console.error("Failed to fetch players from Worker:", workerErr);
+            count.textContent = `${data.players.online} / ${data.players.max}`;
             const li = document.createElement('li');
-            li.textContent = playerName;
+            li.textContent = "Players online, but list couldn't be loaded.";
+            li.style.color = "var(--subtext)";
             list.appendChild(li);
-          });
+          }
         } else {
+          // FIX: Explicitly handle offline API response
+          statusText.textContent = "Offline";
+          badge.className = "badge offline";
+          count.textContent = "0";
+      
           const li = document.createElement('li');
-          li.textContent = "No players online right now.";
+          li.textContent = "Server is offline.";
           li.style.color = "var(--subtext)";
           list.appendChild(li);
         }
-      } catch (workerErr) {
-        console.error("Failed to fetch players from Worker:", workerErr);
-        count.textContent = `${data.players.online} / ${data.players.max}`;
-        const li = document.createElement('li');
-        li.textContent = "Players online, but list couldn't be loaded.";
-        li.style.color = "var(--subtext)";
-        list.appendChild(li);
+      } catch (err) {
+        // Handles total fetch/network failures
+        console.error(err);
+        statusText.textContent = "Offline";
+        badge.className = "badge offline";
+        count.textContent = "0";
       }
-    } else {
-      // FIX: Explicitly handle offline API response
-      statusText.textContent = "Offline";
-      badge.className = "badge offline";
-      count.textContent = "0";
-      
-      const li = document.createElement('li');
-      li.textContent = "Server is offline.";
-      li.style.color = "var(--subtext)";
-      list.appendChild(li);
     }
-  } catch (err) {
-    // Handles total fetch/network failures
-    console.error(err);
-    statusText.textContent = "Offline";
-    badge.className = "badge offline";
-    count.textContent = "0";
-  }
-}
 
     // DISCORD STATE CHANGE ANNOUNCER
-    function handleStatusChange(isOnline) {
-      const previousState = localStorage.getItem('last_known_server_status');
-      const newState = isOnline ? 'online' : 'offline';
-
-      // Only send message if state actually changed from previous check
-      if (previousState && previousState !== newState) {
-        const messageContent = isOnline 
-          ? `🟢 **Server Update:** ${STATUS_PING} Synthesizer is now **ONLINE**!
-          *Server Status Website: https://synthesizer-status.synthesizer.workers.dev/*` 
-          : `🔴 **Server Update:** Synthesizer is now **OFFLINE**!
-          *Server Status Website: https://synthesizer-status.synthesizer.workers.dev/*`;
-
-        fetch(DISCORD_PUBLIC_WEBHOOK, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: messageContent })
-        }).catch(err => console.error("Webhook dispatch error:", err));
-      }
-
-      localStorage.setItem('last_known_server_status', newState);
-    }
-
-    function copyText(text) {
-      navigator.clipboard.writeText(text);
-      alert(`Copied: ${text}`);
-    }
-
-    function pingOfflineHost() {
-      fetch(DISCORD_PRIVATE_WEBHOOK, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          content: `⚠️ **Server Alert:** ${ADMIN_PING} A player noticed the Minecraft server is offline!` 
-        })
-      })
-      .then(res => {
-        if (res.ok) {
-          alert("Alert sent to Discord!");
-        } else {
-          alert("Failed to send alert.");
-        }
-      })
-      .catch(err => console.error(err));
-    }
+    
 
     async function submitSuggestion(event) {
       event.preventDefault();
