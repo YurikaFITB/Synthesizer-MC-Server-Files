@@ -8,7 +8,11 @@
         "version": [1, 0, 6]
     },
     {
-        "pack_id": "b7bc41df-0a9a-4f1a-8e7c-2fce01e56aab",
+        "pack_id": "4d498ac9-15b9-40e8-961f-f481ce2518f0",
         "version": [3, 0, 0]
+    },
+    {
+        "pack_id": "7f5a7c31-98be-4572-9a6d-1db09a31a777",
+        "version": [1, 0, 7]
     }
 ]
