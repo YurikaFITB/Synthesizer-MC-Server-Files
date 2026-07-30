@@ -249,6 +249,69 @@
     const SERVER_HOST = "yellow-ae.gl.at.ply.gg";
     const SERVER_PORT = "3435";
 
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        showCopyFeedback(text);
+      } catch (err) {
+        // Fallback for browsers/contexts where clipboard API is blocked (e.g. non-HTTPS)
+        const tempInput = document.createElement('textarea');
+        tempInput.value = text;
+        tempInput.style.position = 'fixed';
+        tempInput.style.opacity = '0';
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        try {
+          document.execCommand('copy');
+          showCopyFeedback(text);
+        } catch (fallbackErr) {
+          console.error('Copy failed:', fallbackErr);
+          alert('Could not copy automatically — please copy manually: ' + text);
+        }
+        document.body.removeChild(tempInput);
+      }
+    }
+
+    function showCopyFeedback(text) {
+      // Find whichever button triggered this and flash "Copied!" on it
+      const btn = event?.target;
+      if (btn && btn.tagName === 'BUTTON') {
+        const original = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.disabled = true;
+        setTimeout(() => {
+          btn.textContent = original;
+          btn.disabled = false;
+        }, 1200);
+      }
+    }
+
+    // PING-WHEN-OFFLINE NOTIFICATION REQUEST
+    async function pingOfflineHost() {
+      const btn = event?.target;
+      try {
+        await fetch(DISCORD_PRIVATE_WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: `${ADMIN_PING} 🔔 Someone visited the status page while the server was offline and requested it be brought back up.`
+          })
+        });
+        if (btn) {
+          const original = btn.textContent;
+          btn.textContent = '✅ Notification sent!';
+          btn.disabled = true;
+          setTimeout(() => {
+            btn.textContent = original;
+            btn.disabled = false;
+          }, 3000);
+        }
+      } catch (err) {
+        console.error('Failed to send offline ping:', err);
+        alert('Failed to send notification — try again in a bit.');
+      }
+    }
+
     async function checkStatus() {
       const badge = document.getElementById('status-badge');
       const statusText = document.getElementById('status-text');
