@@ -5,7 +5,7 @@ import urllib.request
 import urllib.error
 from endstone.event import (
     event_handler,
-    PlayerChatEvent,s
+    PlayerChatEvent,
     PlayerJoinEvent,
     PlayerQuitEvent,
     PlayerDeathEvent,
