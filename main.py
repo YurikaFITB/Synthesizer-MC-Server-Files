@@ -5,7 +5,7 @@ import urllib.request
 import urllib.error
 from endstone.event import (
     event_handler,
-    PlayerChatEvent,
+    PlayerChatEvent,s
     PlayerJoinEvent,
     PlayerQuitEvent,
     PlayerDeathEvent,
@@ -23,18 +23,27 @@ API_SECRET = "supersecretkey123"
 JSON_OUTPUT_PATH = "players.json"
 STATUS_WEBSITE = "https://synthesizer-status.synthesizer.workers.dev/"
 
-# How often we tell the Worker "I'm still alive". The Worker's cron job
-# treats a gap of a few missed heartbeats as a possible crash/power outage.
-HEARTBEAT_PERIOD_TICKS = 20 * 60  # 60 seconds (20 ticks/sec)
+# How often the plugin CHECKS whether it should sync (cheap, local only,
+# no network call happens just from this timer firing).
+CHECK_PERIOD_TICKS = 20 * 60  # every 60 seconds
+
+# Minimum time between "keep alive" pings to the Worker, used ONLY when the
+# player list hasn't changed. This is what stops us from spamming Cloudflare
+# every 60s for no reason. Must stay comfortably below the Worker's
+# STALE_THRESHOLD_SECONDS (245s in mc-player-tracker.js) or crash detection
+# will start firing false alarms.
+HEARTBEAT_INTERVAL_SECONDS = 180  # 3 minutes
 
 
 class DiscordLoggerPlugin(Plugin):
     name = "DiscordChatLogger"
-    version = "1.1.0"
+    version = "1.2.0"
     api_version = "0.11"
 
     def on_enable(self):
         self.online_players = set()
+        self.last_synced_players = None  # None = "never synced yet", forces first sync
+        self.last_sync_time = 0
         self.logger.info("DiscordChatLogger plugin successfully enabled!")
         self.logger.info(f"players.json will be written to: {os.path.abspath(JSON_OUTPUT_PATH)}")
         self.register_events(self)
@@ -50,18 +59,16 @@ class DiscordLoggerPlugin(Plugin):
         # "graceful shutdown" / "crash alerted" flags from last session.
         self.send_worker_status("startup")
 
-        self.update_player_data()
+        self.update_player_data(force=True)
 
-        # Periodic heartbeat so the Worker can detect an *unexpected*
-        # shutdown (crash, power outage, relatives turning off the PC).
-        # on_disable below only fires on a graceful stop — it will NOT fire
-        # if the process is killed or the machine loses power, which is
-        # exactly the case this heartbeat exists to cover.
+        # This timer just CHECKS every 60s whether a sync is needed (either
+        # the player list changed, or the heartbeat interval elapsed). It
+        # does NOT mean a Worker write happens every time it fires.
         self.server.scheduler.run_task(
             self,
             self.update_player_data,
-            delay=HEARTBEAT_PERIOD_TICKS,
-            period=HEARTBEAT_PERIOD_TICKS,
+            delay=CHECK_PERIOD_TICKS,
+            period=CHECK_PERIOD_TICKS,
         )
 
     def on_disable(self):
@@ -139,7 +146,7 @@ class DiscordLoggerPlugin(Plugin):
         except Exception as e:
             self.logger.error(f"Discord webhook failed: {type(e).__name__}: {e}")
 
-    def update_player_data(self):
+    def update_player_data(self, force: bool = False):
         try:
             current_players = [p.name for p in self.server.online_players]
         except Exception as e:
@@ -154,6 +161,7 @@ class DiscordLoggerPlugin(Plugin):
             "updated_at": int(time.time())
         }
 
+        # 1. ALWAYS write local players.json — this is free, no network/limit involved.
         try:
             abs_path = os.path.abspath(JSON_OUTPUT_PATH)
             with open(abs_path, "w") as f:
@@ -162,6 +170,21 @@ class DiscordLoggerPlugin(Plugin):
         except Exception as e:
             self.logger.error(f"Failed to write local players.json: {type(e).__name__}: {e}")
 
+        # 2. Decide whether to sync to the Cloudflare Worker.
+        #    - Trigger A: the player list actually changed (join/quit).
+        #    - Trigger B: it's been a while (heartbeat), so the Worker
+        #      doesn't think we've gone silent/crashed.
+        #    - force=True is used once on startup so the Worker always
+        #      gets a fresh snapshot when the plugin comes up.
+        list_changed = self.online_players != self.last_synced_players
+        now = time.time()
+        heartbeat_due = (now - self.last_sync_time) >= HEARTBEAT_INTERVAL_SECONDS
+
+        if not (force or list_changed or heartbeat_due):
+            self.logger.info("No player change and heartbeat not due yet — skipping Worker sync.")
+            return
+
+        reason = "startup" if force else ("player list changed" if list_changed else "heartbeat")
         payload = json.dumps(data).encode("utf-8")
         req = urllib.request.Request(
             WORKER_URL,
@@ -174,7 +197,10 @@ class DiscordLoggerPlugin(Plugin):
         )
         try:
             with urllib.request.urlopen(req, timeout=8) as response:
-                self.logger.info(f"Cloudflare Worker sync OK (status {response.status})")
+                self.logger.info(f"Cloudflare Worker sync OK ({reason}, status {response.status})")
+            # Only mark as synced on success, so a failed request gets retried.
+            self.last_synced_players = set(self.online_players)
+            self.last_sync_time = now
         except urllib.error.HTTPError as e:
             body = e.read().decode(errors="replace")
             self.logger.error(f"Cloudflare Worker sync HTTP error: {e.code} - {body}")
