@@ -115,11 +115,42 @@
     }
     button:hover { opacity: 0.9; }
 
+    .mod-category {
+      margin-top: 22px;
+    }
+
+    .mod-category:first-of-type {
+      margin-top: 15px;
+    }
+
+    .mod-category-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .mod-category-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--subtext);
+      white-space: nowrap;
+    }
+
+    .mod-category-title.major { color: var(--accent); }
+
+    .mod-category-line {
+      height: 1px;
+      flex: 1;
+      background: #2d2d35;
+    }
+
     .mod-list {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
       gap: 12px;
-      margin-top: 15px;
     }
 
     .mod-item {
@@ -129,12 +160,39 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 10px;
+    }
+
+    .mod-item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .mod-item-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .mod-version {
+      align-self: flex-start;
+      font-family: monospace;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--accent);
+      background: rgba(88, 101, 242, 0.15);
+      border: 1px solid rgba(88, 101, 242, 0.35);
+      border-radius: 20px;
+      padding: 2px 8px;
     }
 
     .mod-item a {
       color: var(--accent);
       text-decoration: none;
       font-size: 0.85rem;
+      flex-shrink: 0;
     }
 
     .player-list-box {
@@ -164,12 +222,12 @@
       <span class="ip-title">Domain Address</span>
       <div class="ip-box">
         <div class="ip-details">
-          <span>Address: <strong>on.tun.ply.gg</strong></span>
+          <span>Address: <strong>wills-alps.tun.ply.gg</strong></span>
           <span>Port: <strong>40692</strong></span>
         </div>
         <div>
-          <button onclick="copyText('wills-neutron.tun.ply.gg')">Copy IP</button>
-          <button onclick="copyText('40503')">Copy Port</button>
+          <button onclick="copyText('wills-alps.tun.ply.gg')">Copy IP</button>
+          <button onclick="copyText('40692')">Copy Port</button>
         </div>
       </div>
     </div>
@@ -180,11 +238,11 @@
       <div class="ip-box">
         <div class="ip-details">
           <span>Address: <strong>147.185.221.230</strong></span>
-          <span>Port: <strong>40503</strong></span>
+          <span>Port: <strong>40692</strong></span>
         </div>
         <div>
           <button onclick="copyText('147.185.221.230')">Copy IP</button>
-          <button onclick="copyText('40503')">Copy Port</button>
+          <button onclick="copyText('40692')">Copy Port</button>
         </div>
       </div>
     </div>
@@ -207,51 +265,135 @@
   <!-- MODS LIST CARD -->
   <div class="card">
     <h2>Required Mods</h2>
-    <p style="color: var(--subtext); font-size: 0.9rem;">Our Mods:</p>
-    
-    <div class="mod-list">
-      <div class="mod-item">
-        <span>Better On Bedrock [1.2.1]</span>
-        <a href="https://mcpedl.com/better-on-bedrock/" target="_blank" rel="noopener noreferrer">Download</a>
+    <p style="color: var(--subtext); font-size: 0.9rem;">The Mods of Synthesizer.</p>
+
+    <!-- MAJOR MODS: core gameplay/content changers -->
+    <div class="mod-category">
+      <div class="mod-category-header">
+        <span class="mod-category-title major">Major Mods</span>
+        <span class="mod-category-line"></span>
       </div>
-      <div class="mod-item">
-        <span>OTG Backpack [1.0.7]</span>
-        <a href="https://mcpedl.com/otg-backpack/" target="_blank" rel="noopener noreferrer">Download</a>
+      <div class="mod-list">
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-name">Better On Bedrock</span>
+            <span class="mod-version">v1.2.1</span>
+          </div>
+          <a href="https://mcpedl.com/better-on-bedrock/" target="_blank" rel="noopener noreferrer">Download</a>
+        </div>
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-name">OTG Backpack</span>
+            <span class="mod-version">v1.0.7</span>
+          </div>
+          <a href="https://mcpedl.com/otg-backpack/" target="_blank" rel="noopener noreferrer">Download</a>
+        </div>
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-name">Canopy</span>
+            <span class="mod-version">v1.6.0</span>
+          </div>
+          <a href="https://www.curseforge.com/minecraft-bedrock/addons/canopy" target="_blank" rel="noopener noreferrer">Download</a>
+        </div>
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-name">Pet Furniture</span>
+            <span class="mod-version">v3.3.3</span>
+          </div>
+          <a href="https://www.trmc-addons.com/add-ons/pet-furniture/" target="_blank" rel="noopener noreferrer">Download</a>
+        </div>
       </div>
-      <div class="mod-item">
-        <span>Fast Craft & Fast Loot [3.7.0]</span>
-        <a href="https://mcpedl.com/fast-craft-resource-pack-for-mcpe-1-19/" target="_blank" rel="noopener noreferrer">Download</a>
+    </div>
+    <!--
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-name"></span>
+            <span class="mod-version">v</span>
+          </div>
+          <a href="" target="_blank" rel="noopener noreferrer">Download</a>
+        </div>
+    -->
+
+    <!-- MINOR MODS: cosmetic / small QoL tweaks -->
+    <div class="mod-category">
+      <div class="mod-category-header">
+        <span class="mod-category-title">Minor Mods</span>
+        <span class="mod-category-line"></span>
       </div>
-      <div class="mod-item">
-        <span>SoundTweak [4.3.0]</span>
-        <a href="https://mcpedl.com/soundtweaks/" target="_blank" rel="noopener noreferrer">Download</a>
+      <div class="mod-list">
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-name">SoundTweak</span>
+            <span class="mod-version">v4.3.0</span>
+          </div>
+          <a href="https://mcpedl.com/soundtweaks/" target="_blank" rel="noopener noreferrer">Download</a>
+        </div>
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-name">Fast Craft &amp; Fast Loot</span>
+            <span class="mod-version">v3.7.0</span>
+          </div>
+          <a href="https://mcpedl.com/fast-craft-resource-pack-for-mcpe-1-19/" target="_blank" rel="noopener noreferrer">Download</a>
+        </div>
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-name">Durability Viewer</span>
+            <span class="mod-version">v2.4.0</span>
+          </div>
+          <a href="https://mcpedl.com/durability-viewer/" target="_blank" rel="noopener noreferrer">Download</a>
+        </div>
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-name">Low Fire</span>
+            <span class="mod-version">v1.0.8</span>
+          </div>
+          <a href="https://mcpedl.com/low-fire/" target="_blank" rel="noopener noreferrer">Download</a>
+        </div>
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-name">Statistic Display</span>
+            <span class="mod-version">v1.3.0</span>
+          </div>
+          <a href="https://www.curseforge.com/minecraft-bedrock/scripts/statistic-display" target="_blank" rel="noopener noreferrer">Download</a>
+        </div>
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-name">Cute Turtle Helmet</span>
+            <span class="mod-version">v2.0.0</span>
+          </div>
+          <a href="https://www.curseforge.com/minecraft-bedrock/texture-packs/cute-turtle-helmet" target="_blank" rel="noopener noreferrer">Download</a>
+        </div>
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-name">Anvil Rename Limit Break</span>
+            <span class="mod-version">v1.0.0</span>
+          </div>
+          <a href="https://www.curseforge.com/minecraft-bedrock/texture-packs/anvil-rename-limit-break" target="_blank" rel="noopener noreferrer">Download</a>
+        </div>
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-name">Winter Fog</span>
+            <span class="mod-version">v1.1.0</span>
+          </div>
+          <a href="https://www.curseforge.com/minecraft-bedrock/texture-packs/winter-fog" target="_blank" rel="noopener noreferrer">Download</a>
+        </div>
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-name">Wither Herobrine</span>
+            <span class="mod-version">v1.1.0</span>
+          </div>
+          <a href="https://www.curseforge.com/minecraft-bedrock/texture-packs/herobrine-wither" target="_blank" rel="noopener noreferrer">Download</a>
+        </div>
+        <!--
+        <div class="mod-item">
+          <div class="mod-item-info">
+            <span class="mod-item-name"></span>
+            <span class="mod-version">v</span>
+          </div>
+          <a href="" target="_blank" rel="noopener noreferrer">Download</a>
+        </div>
+        -->
       </div>
-      <div class="mod-item">
-        <span>Durability Viewer [2.4.0]</span>
-        <a href="https://mcpedl.com/durability-viewer/" target="_blank" rel="noopener noreferrer">Download</a>
-      </div>
-      <div class="mod-item">
-        <span>Pet Furniture [3.3.3]</span>
-        <a href="https://www.trmc-addons.com/add-ons/pet-furniture/" target="_blank" rel="noopener noreferrer">Download</a>
-      </div>
-      <div class="mod-item">
-        <span>Low Fire [1.0.8]</span>
-        <a href="https://mcpedl.com/low-fire/" target="_blank" rel="noopener noreferrer">Download</a>
-      </div>
-      <div class="mod-item">
-        <span>Statistic Display [1.3.0]</span>
-        <a href="https://www.curseforge.com/minecraft-bedrock/scripts/statistic-display" target="_blank" rel="noopener noreferrer">Download</a>
-      </div>
-      <div class="mod-item">
-        <span>Canopy [1.5.7]</span>
-        <a href="https://www.curseforge.com/minecraft-bedrock/addons/canopy" target="_blank" rel="noopener noreferrer">Download</a>
-      </div>
-      <!--
-      <div class="mod-item">
-        <span> [..]</span>
-        <a href="" target="_blank" rel="noopener noreferrer">Download</a>
-      </div>
-      -->
     </div>
   </div>
 
