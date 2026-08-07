@@ -411,7 +411,6 @@
     const DISCORD_PRIVATE_WEBHOOK = "https://discord.com/api/webhooks/1531000247688630474/BpblDLBCKD0IUkgi-kaCSNZWOlDnVs3AhzufDuVcOvuuyD4p-xCIKezeAw8hrDxk5NIm";
     const DISCORD_PUBLIC_WEBHOOK = "https://discord.com/api/webhooks/1531036952822939657/GMJR2O_mV4k5wPw4dxswUaiecke5BAuZYflMyXYj0gRASvzB2ew1m7Jmb022h3Z5P_Zr";
 
-    const STATUS_PING = "<@&1306303285401223188>";
     const ADMIN_PING = "<@&1531045402542080190>";
 
     const SERVER_HOST = "wills-alps.tun.ply.gg";
@@ -462,7 +461,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            content: `${ADMIN_PING} 🔔 Someone visited the status page while the server was offline and requested it be brought back up.`
+            content: `${ADMIN_PING} 🔔 Someone is requesting the server to be turned online.`
           })
         });
         if (btn) {
