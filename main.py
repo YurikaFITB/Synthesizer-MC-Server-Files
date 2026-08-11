@@ -24,9 +24,20 @@ API_SECRET = "supersecretkey123"
 JSON_OUTPUT_PATH = "players.json"
 STATUS_WEBSITE = "https://synthesizer-status.synthesizer.workers.dev/"
 
-# How often we tell the Worker "I'm still alive". The Worker's cron job
-# treats a gap of a few missed heartbeats as a possible crash/power outage.
+# How often we CHECK whether we need to sync. The Worker's cron job treats
+# a gap of a few missed heartbeats as a possible crash/power outage — this
+# does NOT mean we sync every time this timer fires, see KEEPALIVE_SECONDS.
 HEARTBEAT_PERIOD_TICKS = 20 * 60  # 60 seconds (20 ticks/sec)
+
+# We only actually POST to the Worker (and trigger a KV write) when the
+# player list changed, OR this many seconds have passed since the last
+# successful sync — whichever comes first. This is what keeps you under
+# Cloudflare KV's free-tier write limit during quiet periods, while still
+# refreshing often enough to avoid false crash-detection on the Worker side.
+# NOTE: if you change this, bump the Worker's STALE_THRESHOLD_SECONDS to
+# comfortably exceed it (e.g. keep it at least ~60-90s higher) so a normal
+# keepalive gap is never mistaken for an outage.
+KEEPALIVE_SECONDS = 180
 
 # Shared timeout for outbound HTTP calls. These now all run off the main
 # thread, so a slow/stuck request no longer freezes the server tick loop.
@@ -40,6 +51,8 @@ class DiscordLoggerPlugin(Plugin):
 
     def on_enable(self):
         self.online_players = set()
+        self._last_synced_players = None  # None forces an initial sync
+        self._last_synced_at = 0
         self.logger.info("DiscordChatLogger plugin successfully enabled!")
         self.logger.info(f"players.json will be written to: {os.path.abspath(JSON_OUTPUT_PATH)}")
         self.register_events(self)
@@ -167,8 +180,21 @@ class DiscordLoggerPlugin(Plugin):
         except Exception as e:
             self.logger.error(f"Failed to write local players.json: {type(e).__name__}: {e}")
 
-        # Cloudflare Worker sync — this is the one that ran every 60s on the
-        # main thread before. Now backgrounded.
+        # Cloudflare Worker sync — only actually send when something changed
+        # or a keepalive is due, to stay under the KV free-tier write limit.
+        # Otherwise the 60s heartbeat alone would burn through it fast.
+        current_snapshot = data["players"]
+        now = data["updated_at"]
+        changed = current_snapshot != self._last_synced_players
+        keepalive_due = (now - self._last_synced_at) >= KEEPALIVE_SECONDS
+
+        if not (changed or keepalive_due):
+            self.logger.info("Player list unchanged and keepalive not due yet — skipping Worker sync.")
+            return
+
+        self._last_synced_players = current_snapshot
+        self._last_synced_at = now
+
         self._run_async(
             self._post_json,
             WORKER_URL,
